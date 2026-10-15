@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cask & Dram | 나만의 위스키 볼트 & 에어링 트래커</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans KR & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vault: {
+                            bg: '#0f1115',
+                            card: '#181b22',
+                            cardHover: '#1f242d',
+                            border: '#2a2f3a',
+                            amber: '#f59e0b',
+                            amberDark: '#d97706',
+                            amberDeep: '#b45309',
+                            copper: '#c27838'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'Inter', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f1115;
+            color: #f3f4f6;
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f1115;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2f3a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+
+        /* Amber Liquid Wave & Glow Effect */
+        .amber-glow {
+            box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.25);
+        }
+        .amber-gradient-text {
+            background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .amber-gradient-bg {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #2a2f3a;
+            border-radius: 999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #f59e0b;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+            border: 2px solid #fff;
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Bottle Liquid transition */
+        .bottle-liquid {
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1), y 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modal backdrop blur */
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            background-color: rgba(10, 12, 16, 0.80);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-vault-card border border-vault-border rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 id="confirmTitle" class="text-lg font-bold text-white">확인</h3>
+            </div>
+            <p id="confirmMessage" class="text-gray-300 text-sm leading-relaxed mb-6">정말 실행하시겠습니까?</p>
+            <div class="flex justify-end gap-3">
+                <button id="confirmCancelBtn" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium transition">취소</button>
+                <button id="confirmOkBtn" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation & Header -->
+    <header class="sticky top-0 z-30 bg-[#0f1115]/90 backdrop-blur-md border-b border-vault-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Brand Title -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-2xl amber-gradient-bg flex items-center justify-center shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-whiskey-glass text-gray-950 text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-serif text-xl sm:text-2xl font-bold tracking-tight amber-gradient-text">CASK & DRAM</h1>
+                            <span class="text-[11px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Vault Pro</span>
+                        </div>
+                        <p class="text-xs text-gray-400">프라이빗 위스키 컬렉션 & 에어링 타임라인 트래커</p>
+                    </div>
+                </div>
+
+                <!-- Mobile Quick Add Button -->
+                <button onclick="openBottleFormModal()" class="md:hidden px-3.5 py-2 rounded-xl amber-gradient-bg text-gray-950 font-bold text-sm shadow-lg shadow-amber-500/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> 등록
+                </button>
+            </div>
+
+            <!-- Action Buttons (Backup, Restore, Reset, Add) -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openRecommendationModal()" class="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs sm:text-sm font-medium transition flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>오늘의 한 잔 추천</span>
+                </button>
+
+                <button onclick="exportData()" class="px-3 py-2 rounded-xl bg-vault-card hover:bg-vault-cardHover text-gray-300 border border-vault-border text-xs sm:text-sm font-medium transition flex items-center gap-1.5" title="JSON 파일로 백업">
+                    <i class="fa-solid fa-download text-amber-500"></i>
+                    <span>백업</span>
+                </button>
+
+                <label class="px-3 py-2 rounded-xl bg-vault-card hover:bg-vault-cardHover text-gray-300 border border-vault-border text-xs sm:text-sm font-medium transition flex items-center gap-1.5 cursor-pointer" title="JSON 백업 파일 불러오기">
+                    <i class="fa-solid fa-upload text-amber-500"></i>
+                    <span>복원</span>
+                    <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importData(event)">
+                </label>
+
+                <button onclick="resetToSampleData()" class="px-3 py-2 rounded-xl bg-vault-card hover:bg-red-950/40 text-gray-400 hover:text-red-400 border border-vault-border hover:border-red-800/50 text-xs sm:text-sm font-medium transition flex items-center gap-1.5" title="초기 샘플 데이터로 초기화">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span class="hidden sm:inline">샘플 초기화</span>
+                </button>
+
+                <button onclick="openBottleFormModal()" class="hidden md:flex px-4 py-2.5 rounded-xl amber-gradient-bg hover:opacity-95 text-gray-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition items-center gap-2 ml-1">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>새 위스키 등록</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- 1. Summary Dashboard -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
+            <!-- Total Bottles -->
+            <div class="bg-vault-card border border-vault-border rounded-2xl p-4 sm:p-5 flex items-center justify-between relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-6xl text-amber-500/5 group-hover:text-amber-500/10 transition">
+                    <i class="fa-solid fa-wine-bottle"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">총 보유 바틀</p>
+                    <div class="flex items-baseline gap-2 mt-1.5">
+                        <span id="statTotalBottles" class="text-2xl sm:text-3xl font-bold text-white">0</span>
+                        <span class="text-xs text-gray-400">Bottles</span>
+                    </div>
+                    <p id="statTotalBreakdown" class="text-[11px] text-amber-400/90 mt-1">싱글몰트 0 · 버번 0</p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fa-solid fa-wine-bottle text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Opened & Airing Status -->
+            <div class="bg-vault-card border border-vault-border rounded-2xl p-4 sm:p-5 flex items-center justify-between relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-6xl text-emerald-500/5 group-hover:text-emerald-500/10 transition">
+                    <i class="fa-solid fa-wind"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">개봉 (에어링 중)</p>
+                    <div class="flex items-baseline gap-2 mt-1.5">
+                        <span id="statOpenedBottles" class="text-2xl sm:text-3xl font-bold text-emerald-400">0</span>
+                        <span id="statUnopenedSub" class="text-xs text-gray-400">/ 미개봉 0</span>
+                    </div>
+                    <p id="statLowLevelAlert" class="text-[11px] text-gray-400 mt-1">잔량 주의 바틀 없음</p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i class="fa-solid fa-wind text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Total Collection Value -->
+            <div class="bg-vault-card border border-vault-border rounded-2xl p-4 sm:p-5 flex items-center justify-between relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-6xl text-amber-500/5 group-hover:text-amber-500/10 transition">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">총 구매 가치</p>
+                    <div class="flex items-baseline gap-1 mt-1.5">
+                        <span id="statTotalValue" class="text-xl sm:text-2xl font-bold text-amber-400">₩0</span>
+                    </div>
+                    <p id="statAvgPrice" class="text-[11px] text-gray-400 mt-1">바틀당 평균 ₩0</p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                    <i class="fa-solid fa-coins text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Average Rating & Total Tasting Logs -->
+            <div class="bg-vault-card border border-vault-border rounded-2xl p-4 sm:p-5 flex items-center justify-between relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-6xl text-purple-500/5 group-hover:text-purple-500/10 transition">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">평균 평점 & 시음 기록</p>
+                    <div class="flex items-baseline gap-2 mt-1.5">
+                        <span id="statAvgRating" class="text-2xl sm:text-3xl font-bold text-white">0.0</span>
+                        <span class="text-xs text-amber-400"><i class="fa-solid fa-star"></i> / 95+</span>
+                    </div>
+                    <p id="statTotalLogs" class="text-[11px] text-purple-300 mt-1">누적 테이스팅 노트 0건</p>
+                </div>
+                <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <i class="fa-solid fa-feather-pointed text-lg"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Filter, Category Tabs & Search Bar -->
+        <section class="bg-vault-card border border-vault-border rounded-2xl p-4 space-y-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <!-- Category Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar" id="categoryFilterBar">
+                    <button onclick="setFilterCategory('ALL')" data-cat="ALL" class="cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-amber-500 text-gray-950">전체 보기</button>
+                    <button onclick="setFilterCategory('싱글몰트')" data-cat="싱글몰트" class="cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-gray-800/80 text-gray-300 hover:bg-gray-700">싱글몰트</button>
+                    <button onclick="setFilterCategory('버번')" data-cat="버번" class="cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-gray-800/80 text-gray-300 hover:bg-gray-700">버번 / 아메리칸</button>
+                    <button onclick="setFilterCategory('라이')" data-cat="라이" class="cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-gray-800/80 text-gray-300 hover:bg-gray-700">라이 (Rye)</button>
+                    <button onclick="setFilterCategory('블렌디드')" data-cat="블렌디드" class="cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-gray-800/80 text-gray-300 hover:bg-gray-700">블렌디드</button>
+                </div>
+
+                <!-- Right Controls: Status Filter, Sort, Search -->
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+                    <!-- Status Select -->
+                    <select id="statusFilterSelect" onchange="renderBottles()" class="bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-500">
+                        <option value="ALL">상태: 전체</option>
+                        <option value="OPENED">개봉됨 (에어링 중)</option>
+                        <option value="UNOPENED">미개봉 (보관 중)</option>
+                        <option value="EMPTY">공병 (Empty)</option>
+                    </select>
+
+                    <!-- Sort Select -->
+                    <select id="sortSelect" onchange="renderBottles()" class="bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-500">
+                        <option value="RECENT">정렬: 최근 구매순</option>
+                        <option value="RATING_DESC">정렬: 평점 높은순</option>
+                        <option value="PRICE_DESC">정렬: 가격 높은순</option>
+                        <option value="ABV_DESC">정렬: 도수(ABV) 높은순</option>
+                        <option value="AIRING_DESC">정렬: 개봉 경과일순</option>
+                    </select>
+
+                    <!-- Search Input -->
+                    <div class="relative flex-1 sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="searchInput" oninput="renderBottles()" placeholder="위스키명, 증류소, 캐스크 검색..." class="w-full bg-[#111318] border border-vault-border rounded-xl pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition">
+                        <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Whiskey Bottle Grid -->
+        <section>
+            <div id="bottleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-5">
+                <!-- Dynamically Rendered via JS -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden bg-vault-card border border-vault-border rounded-2xl p-12 text-center my-6">
+                <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto mb-4">
+                    <i class="fa-solid fa-wine-glass-empty text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1">조건에 맞는 위스키가 없습니다</h3>
+                <p class="text-xs text-gray-400 mb-5">검색어를 변경하거나 새로운 위스키 바틀을 볼트에 추가해보세요.</p>
+                <button onclick="openBottleFormModal()" class="px-4 py-2.5 rounded-xl amber-gradient-bg text-gray-950 font-bold text-xs shadow-lg">
+                    <i class="fa-solid fa-plus mr-1"></i> 새 위스키 등록하기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-vault-border py-6 mt-12 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p><span class="text-amber-500 font-serif font-semibold">CASK & DRAM</span> — 개인 맞춤형 위스키 & 에어링 기록 보관소</p>
+            <p>모든 데이터는 브라우저(LocalStorage)에 자동 저장되며 JSON으로 백업할 수 있습니다.</p>
+        </div>
+    </footer>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 1: WHISKEY DETAIL, 5-AXIS RADAR CHART & AIRING TIMELINE LOG MODAL -->
+    <!-- ========================================================================= -->
+    <div id="detailModal" class="fixed inset-0 z-40 hidden items-center justify-center modal-backdrop p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-vault-card border border-vault-border rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto shadow-2xl my-auto">
+            
+            <!-- Modal Sticky Header -->
+            <div class="sticky top-0 z-20 bg-vault-card/95 backdrop-blur-md border-b border-vault-border px-5 sm:px-7 py-4 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span id="detailCategoryBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap">싱글몰트</span>
+                    <div class="truncate">
+                        <h2 id="detailName" class="text-lg sm:text-xl font-bold text-white truncate">위스키 이름</h2>
+                        <p id="detailEngName" class="text-xs text-gray-400 font-serif italic truncate">English Name</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button id="detailEditBtn" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-to-square text-amber-400"></i> 수정
+                    </button>
+                    <button id="detailDeleteBtn" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-red-950/60 text-gray-400 hover:text-red-400 text-xs font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i> 삭제
+                    </button>
+                    <button onclick="closeDetailModal()" class="w-8 h-8 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition ml-1">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 sm:p-7 space-y-8">
+                
+                <!-- Top Section: Bottle Specs + Interactive Gauge + 5-Axis Radar Chart -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                    
+                    <!-- Left 7 Cols: Specs, Purchase Info & Interactive Level Control -->
+                    <div class="lg:col-span-7 flex flex-col justify-between bg-[#12151b] border border-vault-border rounded-2xl p-5 space-y-5">
+                        
+                        <div class="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+                            <!-- Visual SVG Bottle Gauge -->
+                            <div class="w-28 shrink-0 flex flex-col items-center bg-vault-card border border-vault-border rounded-2xl p-3">
+                                <div id="detailBottleSvgContainer" class="w-16 h-36 flex items-center justify-center">
+                                    <!-- SVG injected by JS -->
+                                </div>
+                                <span id="detailLevelText" class="text-sm font-bold text-amber-400 mt-1">75%</span>
+                                <span class="text-[10px] text-gray-500">현재 잔량</span>
+                            </div>
+
+                            <!-- Core Spec Grid -->
+                            <div class="flex-1 w-full space-y-3">
+                                <div class="flex flex-wrap items-center gap-2" id="detailStatusHeader">
+                                    <!-- Status & Airing D+N badge -->
+                                </div>
+
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                                    <div class="bg-vault-card/90 border border-vault-border/80 rounded-xl p-2.5">
+                                        <span class="text-[10px] text-gray-400 block">증류소 / 지역</span>
+                                        <span id="detailDistillery" class="text-xs font-semibold text-white mt-0.5 block truncate">-</span>
+                                    </div>
+                                    <div class="bg-vault-card/90 border border-vault-border/80 rounded-xl p-2.5">
+                                        <span class="text-[10px] text-gray-400 block">숙성연수 (Age)</span>
+                                        <span id="detailAge" class="text-xs font-semibold text-white mt-0.5 block">-</span>
+                                    </div>
+                                    <div class="bg-vault-card/90 border border-vault-border/80 rounded-xl p-2.5">
+                                        <span class="text-[10px] text-gray-400 block">도수 (ABV)</span>
+                                        <span id="detailAbv" class="text-xs font-semibold text-amber-400 mt-0.5 block">-</span>
+                                    </div>
+                                    <div class="bg-vault-card/90 border border-vault-border/80 rounded-xl p-2.5 col-span-2">
+                                        <span class="text-[10px] text-gray-400 block">캐스크 타입 (Cask Info)</span>
+                                        <span id="detailCask" class="text-xs font-semibold text-white mt-0.5 block truncate">-</span>
+                                    </div>
+                                    <div class="bg-vault-card/90 border border-vault-border/80 rounded-xl p-2.5">
+                                        <span class="text-[10px] text-gray-400 block">피트 수치 (PPM)</span>
+                                        <span id="detailPpm" class="text-xs font-semibold text-white mt-0.5 block">-</span>
+                                    </div>
+                                </div>
+
+                                <!-- Purchase Info Box -->
+                                <div class="bg-vault-card/50 border border-vault-border/60 rounded-xl p-3 grid grid-cols-3 gap-2 text-xs">
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 block">구입일</span>
+                                        <span id="detailPurchaseDate" class="font-medium text-gray-200">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 block">구입처</span>
+                                        <span id="detailPurchaseStore" class="font-medium text-gray-200 truncate block">-</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 block">구매 가격</span>
+                                        <span id="detailPrice" class="font-semibold text-amber-400">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Bottle Remaining Level Controller -->
+                        <div class="border-t border-vault-border pt-4 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-semibold text-gray-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-sliders text-amber-400"></i> 실시간 잔량 & 개봉 상태 조절
+                                </label>
+                                <span id="parafilmAlertBadge" class="hidden text-[11px] px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/30">
+                                    <i class="fa-solid fa-shield-halved mr-1"></i>잔량 40% 이하: 파라필름 실링 또는 소분 권장
+                                </span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-center gap-3">
+                                <input type="range" id="detailLevelSlider" min="0" max="100" step="5" class="w-full" oninput="updateDetailBottleLevel(this.value)">
+                                <div class="flex items-center gap-1.5 shrink-0 w-full sm:w-auto justify-end">
+                                    <button onclick="updateDetailBottleLevel(100)" class="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] text-gray-300 font-medium">100%</button>
+                                    <button onclick="updateDetailBottleLevel(75)" class="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] text-gray-300 font-medium">75%</button>
+                                    <button onclick="updateDetailBottleLevel(50)" class="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] text-gray-300 font-medium">50%</button>
+                                    <button onclick="updateDetailBottleLevel(25)" class="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] text-gray-300 font-medium">25%</button>
+                                    <button onclick="updateDetailBottleLevel(0)" class="px-2.5 py-1 rounded-lg bg-red-950/50 hover:bg-red-900/60 text-[11px] text-red-300 font-medium">공병</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right 5 Cols: 5-Axis SVG Radar Chart -->
+                    <div class="lg:col-span-5 bg-[#12151b] border border-vault-border rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-pie text-amber-400"></i> 5대 풍미 밸런스 프로필
+                                </h3>
+                                <p class="text-[11px] text-gray-400">개봉 직후와 최근 에어링 노트를 겹쳐서 비교합니다</p>
+                            </div>
+                            <label class="flex items-center gap-1.5 text-[11px] text-gray-300 cursor-pointer select-none">
+                                <input type="checkbox" id="compareRadarCheckbox" checked onchange="refreshDetailRadarChart()" class="accent-amber-500 rounded">
+                                <span>에어링 전/후 비교</span>
+                            </label>
+                        </div>
+
+                        <!-- SVG Radar Chart Container -->
+                        <div id="radarChartContainer" class="w-full h-60 flex items-center justify-center my-auto">
+                            <!-- Rendered dynamically via SVG -->
+                        </div>
+
+                        <!-- Legend & Numeric Scores -->
+                        <div class="space-y-2 pt-2 border-t border-vault-border/80">
+                            <div id="radarLegend" class="flex items-center justify-center gap-4 text-[11px]">
+                                <span class="flex items-center gap-1.5 text-amber-400 font-medium">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> 최신 풍미 프로필
+                                </span>
+                                <span id="radarInitialLegend" class="flex items-center gap-1.5 text-cyan-400 font-medium">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> 첫 개봉(초기) 시음
+                                </span>
+                            </div>
+                            <div id="detailFlavorNumericRow" class="grid grid-cols-5 gap-1 text-center pt-1">
+                                <!-- Numeric badges -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Section: Airing & Tasting Timeline Logs (1:N) -->
+                <div class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-vault-border pb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+                                에어링 & 테이스팅 타임라인 로그
+                                <span id="detailLogCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">0</span>
+                            </h3>
+                            <p class="text-xs text-gray-400">개봉 직후(Neck Pour)부터 시간이 지남에 따라 변화하는 향과 맛을 기록하세요.</p>
+                        </div>
+                        <button onclick="toggleNewTastingForm()" id="toggleTastingFormBtn" class="px-4 py-2 rounded-xl amber-gradient-bg text-gray-950 font-bold text-xs shadow-md flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-plus"></i> 새 테이스팅 노트 추가
+                        </button>
+                    </div>
+
+                    <!-- Collapsible New Tasting Log Form -->
+                    <form id="newTastingForm" onsubmit="saveNewTastingLog(event)" class="hidden bg-[#12151b] border border-amber-500/40 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-center justify-between border-b border-vault-border pb-2.5">
+                            <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+                                <i class="fa-solid fa-pen-nib"></i> 새 시음 기록 작성
+                            </h4>
+                            <span class="text-[11px] text-gray-400">시음일을 입력하면 개봉일 기준 <strong class="text-amber-300">에어링 N일차</strong>가 자동 계산됩니다.</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">시음 날짜 *</label>
+                                <input type="date" id="logDate" required class="w-full bg-vault-card border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">시음 방식 (Serve Style)</label>
+                                <select id="logServeStyle" class="w-full bg-vault-card border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                    <option value="니트 (글렌캐런)">니트 (글렌캐런)</option>
+                                    <option value="니트 + 워터드롭 (2~3방울)">니트 + 워터드롭 (2~3방울)</option>
+                                    <option value="온더락 (빅 아이스)">온더락 (빅 아이스)</option>
+                                    <option value="하이볼">하이볼</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">시음 시점 잔량 (%)</label>
+                                <input type="number" id="logFillLevel" min="0" max="100" value="70" class="w-full bg-vault-card border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">총점 (100점 만점) *</label>
+                                <input type="number" id="logScore" min="50" max="100" step="0.5" value="92.0" required class="w-full bg-vault-card border border-vault-border rounded-xl px-3 py-2 text-xs text-amber-400 font-bold focus:border-amber-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Nosing / Palate / Finish -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                            <div>
+                                <label class="block text-xs text-amber-400 font-medium mb-1"><i class="fa-solid fa-wind mr-1"></i>Nosing (향)</label>
+                                <textarea id="logNosing" rows="2" required placeholder="예: 건포도, 다크 초콜릿, 오렌지 껍질, 피트 스모크..." class="w-full bg-vault-card border border-vault-border rounded-xl p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-amber-400 font-medium mb-1"><i class="fa-solid fa-droplet mr-1"></i>Palate (맛 & 질감)</label>
+                                <textarea id="logPalate" rows="2" required placeholder="예: 묵직한 바디감, 흑설탕, 시나몬 스파이스, 구운 아몬드..." class="w-full bg-vault-card border border-vault-border rounded-xl p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-amber-400 font-medium mb-1"><i class="fa-solid fa-hourglass-end mr-1"></i>Finish (여운)</label>
+                                <textarea id="logFinish" rows="2" required placeholder="예: 긴 여운, 스모키한 피트와 에스프레소의 쌉싸름함..." class="w-full bg-vault-card border border-vault-border rounded-xl p-2.5 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1"><i class="fa-solid fa-utensils mr-1 text-amber-400"></i>푸드 페어링 & 총평 메모</label>
+                                <input type="text" id="logPairing" placeholder="예: 85% 다크 초콜릿, 하몽, 시가와 환상적인 궁합" class="w-full bg-vault-card border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            </div>
+
+                            <!-- 5 Flavor Sliders for this Tasting Log -->
+                            <div class="bg-vault-card border border-vault-border rounded-xl p-3">
+                                <span class="text-[11px] font-semibold text-gray-300 block mb-2">시음 당시 5대 풍미 밸런스 (1~10)</span>
+                                <div class="grid grid-cols-5 gap-2 text-center">
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 block">피트</label>
+                                        <input type="number" id="logFPeat" min="1" max="10" value="5" class="w-full bg-[#111318] border border-vault-border rounded-lg py-1 text-center text-xs text-amber-400 font-bold mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 block">셰리/단맛</label>
+                                        <input type="number" id="logFSherry" min="1" max="10" value="7" class="w-full bg-[#111318] border border-vault-border rounded-lg py-1 text-center text-xs text-amber-400 font-bold mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 block">프루티</label>
+                                        <input type="number" id="logFFruity" min="1" max="10" value="6" class="w-full bg-[#111318] border border-vault-border rounded-lg py-1 text-center text-xs text-amber-400 font-bold mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 block">오크/우디</label>
+                                        <input type="number" id="logFOak" min="1" max="10" value="7" class="w-full bg-[#111318] border border-vault-border rounded-lg py-1 text-center text-xs text-amber-400 font-bold mt-1">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-gray-400 block">스파이시</label>
+                                        <input type="number" id="logFSpicy" min="1" max="10" value="6" class="w-full bg-[#111318] border border-vault-border rounded-lg py-1 text-center text-xs text-amber-400 font-bold mt-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" onclick="toggleNewTastingForm()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs text-gray-300">취소</button>
+                            <button type="submit" class="px-5 py-2 rounded-xl amber-gradient-bg text-gray-950 font-bold text-xs shadow-lg">시음 기록 저장</button>
+                        </div>
+                    </form>
+
+                    <!-- Timeline List -->
+                    <div id="detailTimelineContainer" class="space-y-4 relative before:absolute before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-amber-500/20">
+                        <!-- Dynamically populated via JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 2: ADD / EDIT WHISKEY BOTTLE MODAL                                  -->
+    <!-- ========================================================================= -->
+    <div id="bottleFormModal" class="fixed inset-0 z-40 hidden items-center justify-center modal-backdrop p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-vault-card border border-vault-border rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl my-auto">
+            <div class="sticky top-0 z-20 bg-vault-card/95 backdrop-blur-md border-b border-vault-border px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl amber-gradient-bg flex items-center justify-center text-gray-950">
+                        <i class="fa-solid fa-wine-bottle"></i>
+                    </div>
+                    <h2 id="bottleFormTitle" class="text-lg font-bold text-white">새 위스키 바틀 등록</h2>
+                </div>
+                <button onclick="closeBottleFormModal()" class="w-8 h-8 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="bottleForm" onsubmit="saveBottleForm(event)" class="p-6 space-y-6">
+                <input type="hidden" id="formBottleId">
+
+                <!-- 1. 기본 바틀 스펙 -->
+                <div class="space-y-3.5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-tag"></i> 1. 바틀 기본 스펙
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">위스키 한글명 *</label>
+                            <input type="text" id="formName" required placeholder="예: 브룩라디 블랙 아트 10.1" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3.5 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">영문명 (선택)</label>
+                            <input type="text" id="formEngName" placeholder="예: Bruichladdich Black Art 10.1" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3.5 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">분류 *</label>
+                            <select id="formCategory" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                <option value="싱글몰트">싱글몰트</option>
+                                <option value="버번">버번</option>
+                                <option value="라이">라이 (Rye)</option>
+                                <option value="블렌디드">블렌디드</option>
+                                <option value="싱글그레인">싱글그레인</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">증류소 *</label>
+                            <input type="text" id="formDistillery" required placeholder="예: 브룩라디" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">지역 / 국가 *</label>
+                            <input type="text" id="formRegion" required placeholder="예: 아일라 / 스코틀랜드" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">숙성연수 *</label>
+                            <input type="text" id="formAge" required placeholder="예: 29년 또는 NAS" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">도수 (ABV %) *</label>
+                            <input type="number" id="formAbv" step="0.1" min="20" max="90" required placeholder="57.7" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-amber-400 font-bold focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div class="flex items-end pb-1">
+                            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer select-none bg-[#111318] border border-vault-border rounded-xl px-3 py-2 w-full">
+                                <input type="checkbox" id="formIsCS" class="accent-amber-500 rounded">
+                                <span>캐스크 스트렝스 (CS)</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">피트 수치 (PPM)</label>
+                            <input type="text" id="formPpm" placeholder="예: Unpeated 또는 128.9 PPM" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">캐스크 타입 *</label>
+                            <input type="text" id="formCask" required placeholder="예: 올로로소 & 아마로네 캐스크" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 구매 및 개봉 상태 관리 -->
+                <div class="space-y-3.5 border-t border-vault-border pt-5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-open"></i> 2. 구매 정보 및 개봉/잔량 상태
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">구입일 *</label>
+                            <input type="date" id="formPurchaseDate" required class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">구입처</label>
+                            <input type="text" id="formPurchaseStore" placeholder="예: 인천공항 면세점 / 데일리샷" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">구입 가격 (원) *</label>
+                            <input type="number" id="formPrice" min="0" step="1000" required placeholder="350000" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">바틀 상태 *</label>
+                            <select id="formStatus" onchange="handleFormStatusChange()" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                                <option value="OPENED">개봉됨 (에어링 중)</option>
+                                <option value="UNOPENED">미개봉 (보관 중)</option>
+                                <option value="EMPTY">공병 (Empty)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">개봉일 (Open Date)</label>
+                            <input type="date" id="formOpenDate" class="w-full bg-[#111318] border border-vault-border rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-300 mb-1">현재 잔량 (<span id="formLevelLabel" class="text-amber-400 font-bold">80%</span>)</label>
+                            <input type="range" id="formFillLevel" min="0" max="100" step="5" value="80" oninput="document.getElementById('formLevelLabel').textContent = this.value + '%'" class="w-full mt-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 5대 풍미 프로필 & 초기 테이스팅 노트 -->
+                <div class="space-y-3.5 border-t border-vault-border pt-5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-compass-drafting"></i> 3. 기본 5대 풍미 프로필 설정 (1~10점)
+                    </h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-[#111318] border border-vault-border rounded-2xl p-4">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-300">피트/스모키</span>
+                                <span id="lblPeat" class="text-amber-400 font-bold">5</span>
+                            </div>
+                            <input type="range" id="formFPeat" min="1" max="10" value="5" oninput="document.getElementById('lblPeat').textContent=this.value" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-300">셰리/달콤함</span>
+                                <span id="lblSherry" class="text-amber-400 font-bold">7</span>
+                            </div>
+                            <input type="range" id="formFSherry" min="1" max="10" value="7" oninput="document.getElementById('lblSherry').textContent=this.value" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-300">프루티/화사함</span>
+                                <span id="lblFruity" class="text-amber-400 font-bold">7</span>
+                            </div>
+                            <input type="range" id="formFFruity" min="1" max="10" value="7" oninput="document.getElementById('lblFruity').textContent=this.value" class="w-full">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-300">오크/우디</span>
+                                <span id="lblOak" class="text-amber-400 font-bold">7</span>
+                            </div>
+                            <input type="range" id="formFOak" min="1" max="10" value="7" oninput="document.getElementById('lblOak').textContent=this.value" class="w-full">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-300">스파이시/타닌</span>
+                                <span id="lblSpicy" class="text-amber-400 font-bold">6</span>
+                            </div>
+                            <input type="range" id="formFSpicy" min="1" max="10" value="6" oninput="document.getElementById('lblSpicy').textContent=this.value" class="w-full">
+                        </div>
+                    </div>
+
+                    <!-- Initial Quick Tasting Note (Only shown when adding a new bottle) -->
+                    <div id="initialNoteSection" class="space-y-3 pt-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs text-gray-300 font-medium">첫 테이스팅 한줄 메모 & 초기 평점 (선택)</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400">평점:</span>
+                                <input type="number" id="formInitialScore" min="50" max="100" step="0.5" value="93.0" class="w-20 bg-[#111318] border border-vault-border rounded-lg px-2 py-1 text-xs text-amber-400 font-bold text-center">
+                            </div>
+                        </div>
+                        <textarea id="formInitialNote" rows="2" placeholder="첫 시음 소감이나 바틀 특징을 적어두면 첫 번째 테이스팅 타임라인 노트로 자동 등록됩니다." class="w-full bg-[#111318] border border-vault-border rounded-xl p-3 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-vault-border">
+                    <button type="button" onclick="closeBottleFormModal()" class="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-medium text-gray-300">취소</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl amber-gradient-bg text-gray-950 font-bold text-xs shadow-lg">바틀 저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 3: TODAY'S DRAM RECOMMENDATION MODAL                                -->
+    <!-- ========================================================================= -->
+    <div id="recommendModal" class="fixed inset-0 z-40 hidden items-center justify-center modal-backdrop p-4">
+        <div class="bg-vault-card border border-vault-border rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-vault-border pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">오늘의 한 잔 큐레이션</h3>
+                        <p class="text-[11px] text-gray-400">현재 개봉된 바틀 중 오늘 기분에 가장 잘 맞는 드램을 추천합니다</p>
+                    </div>
+                </div>
+                <button onclick="closeRecommendationModal()" class="w-8 h-8 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-xs font-semibold text-gray-300">오늘 어떤 스타일이 끌리시나요?</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="pickRecommendation('SHERRY')" class="p-3 rounded-xl bg-[#111318] hover:bg-amber-500/15 border border-vault-border hover:border-amber-500/50 text-left transition group">
+                        <div class="text-xs font-bold text-amber-400 group-hover:translate-x-0.5 transition"><i class="fa-solid fa-wine-glass mr-1.5"></i>꾸덕한 셰리 & 달콤함</div>
+                        <p class="text-[10px] text-gray-400 mt-0.5">건과일, 초콜릿, 깊은 숙성미</p>
+                    </button>
+                    <button onclick="pickRecommendation('PEAT')" class="p-3 rounded-xl bg-[#111318] hover:bg-amber-500/15 border border-vault-border hover:border-amber-500/50 text-left transition group">
+                        <div class="text-xs font-bold text-emerald-400 group-hover:translate-x-0.5 transition"><i class="fa-solid fa-fire-flame-curved mr-1.5"></i>강렬한 피트 & 스모키</div>
+                        <p class="text-[10px] text-gray-400 mt-0.5">모닥불, 피트 향과 복합적인 여운</p>
+                    </button>
+                    <button onclick="pickRecommendation('HIGH_ABV')" class="p-3 rounded-xl bg-[#111318] hover:bg-amber-500/15 border border-vault-border hover:border-amber-500/50 text-left transition group">
+                        <div class="text-xs font-bold text-red-400 group-hover:translate-x-0.5 transition"><i class="fa-solid fa-bolt mr-1.5"></i>고도수 CS 타격감</div>
+                        <p class="text-[10px] text-gray-400 mt-0.5">진한 오크와 스파이시한 풀바디</p>
+                    </button>
+                    <button onclick="pickRecommendation('FRUITY')" class="p-3 rounded-xl bg-[#111318] hover:bg-amber-500/15 border border-vault-border hover:border-amber-500/50 text-left transition group">
+                        <div class="text-xs font-bold text-purple-400 group-hover:translate-x-0.5 transition"><i class="fa-solid fa-apple-whole mr-1.5"></i>복합적인 과실향 & 밸런스</div>
+                        <p class="text-[10px] text-gray-400 mt-0.5">우아한 향기와 실키한 목넘김</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recommendation Result Card -->
+            <div id="recommendResultBox" class="bg-[#111318] border border-amber-500/30 rounded-2xl p-4">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- APPLICATION JAVASCRIPT                                                    -->
+    <!-- ========================================================================= -->
+    <script>
+        const STORAGE_KEY = 'CASK_AND_DRAM_VAULT_V1';
+        let bottles = [];
+        let activeCategory = 'ALL';
+        let currentDetailBottleId = null;
+
+        // -------------------------------------------------------------------------
+        // 1. PRE-LOADED LUXURY WHISKEY SAMPLE DATA (4 BOTTLES)
+        // -------------------------------------------------------------------------
+        function getSampleBottles() {
+            return [
+                {
+                    id: 'b_black_art',
+                    name: '브룩라디 블랙 아트 11.1',
+                    engName: 'Bruichladdich Black Art Edition 11.1',
+                    distillery: '브룩라디 (Bruichladdich)',
+                    category: '싱글몰트',
+                    region: '아일라 (Islay)',
+                    age: '29년 (1994 빈티지)',
+                    abv: 44.2,
+                    isCS: true,
+                    cask: '언피티드 시크릿 와인 & 셰리 캐스크 (Unpeated Secret Casks)',
+                    ppm: 'Unpeated (0 PPM)',
+                    purchaseDate: '2025-11-10',
+                    purchaseStore: '신세계 면세점 VIP 바틀샵',
+                    price: 780000,
+                    status: 'OPENED',
+                    openDate: '2025-12-01',
+                    fillLevel: 75,
+                    flavors: { peat: 1, sherry: 9, fruity: 10, oak: 9, spicy: 7 },
+                    tastingLogs: [
+                        {
+                            id: 'log_ba_2',
+                            date: '2026-03-15',
+                            airingDays: 104,
+                            serveStyle: '니트 (글렌캐런)',
+                            fillLevelAtTasting: 75,
+                            score: 96.5,
+                            nosing: '에어링 3개월 차에 접어들며 폭발하는 블랙체리, 무화과 콩포트, 오래된 가죽과 발사믹 글레이즈, 시더우드의 황홀한 레이어.',
+                            palate: '벨벳처럼 부드러운 텍스처. 다크 초콜릿 트러플, 말린 자두, 오렌지 마말레이드와 구운 오크의 우아한 타닌감이 완벽한 조화를 이룸.',
+                            finish: '끝없이 이어지는 긴 여운. 시나몬과 베리류의 잔향이 입안을 맴돌며 29년 숙성의 깊이를 증명함.',
+                            pairing: '고르곤졸라 치즈, 85% 빈투바 다크 초콜릿',
+                            flavors: { peat: 1, sherry: 9, fruity: 10, oak: 9, spicy: 7 }
+                        },
+                        {
+                            id: 'log_ba_1',
+                            date: '2025-12-01',
+                            airingDays: 1,
+                            serveStyle: '니트 (글렌캐런)',
+                            fillLevelAtTasting: 98,
+                            score: 94.0,
+                            nosing: '개봉 직후(Neck Pour)임에도 알코올 부즈가 전혀 없음. 자두, 건포도, 묵직한 와인 캐스크 뉘앙스와 오크 스파이스.',
+                            palate: '농밀한 과실미와 묵직한 오크 타닌이 먼저 치고 올라옴. 시간이 지나면 엄청나게 열릴 잠재력이 느껴짐.',
+                            finish: '묵직하고 드라이한 오크와 다크 프루트 여운.',
+                            pairing: '니트 단독 시음',
+                            flavors: { peat: 1, sherry: 8, fruity: 8, oak: 9, spicy: 8 }
+                        }
+                    ]
+                },
+                {
+                    id: 'b_joseph_magnus',
+                    name: '조셉 매그너스 시가 블렌드',
+                    engName: 'Joseph Magnus Cigar Blend Bourbon (Batch 184)',
+                    distillery: '조셉 매그너스 (Joseph Magnus)',
+                    category: '버번',
+                    region: '미국 (미시간 / 인디애나)',
+                    age: 'NAS (11~18년 원액 블렌딩)',
+                    abv: 60.4,
+                    isCS: true,
+                    cask: '아르마냑 · 올로로소 셰리 · 코냑 캐스크 피니시',
+                    ppm: 'Unpeated',
+                    purchaseDate: '2025-09-20',
+                    purchaseStore: '해외 바틀샵 직구',
+                    price: 460000,
+                    status: 'OPENED',
+                    openDate: '2025-10-05',
+                    fillLevel: 50,
+                    flavors: { peat: 2, sherry: 9, fruity: 8, oak: 10, spicy: 9 },
+                    tastingLogs: [
+                        {
+                            id: 'log_jm_2',
+                            date: '2026-04-02',
+                            airingDays: 179,
+                            serveStyle: '니트 + 워터드롭 (2~3방울)',
+                            fillLevelAtTasting: 50,
+                            score: 95.5,
+                            nosing: '절반까지 에어링된 후 아르마냑 캐스크의 진가가 폭발함. 구운 피칸 파이, 메이플 시럽, 시가 박스(우디/타바코), 블랙베리 잼.',
+                            palate: '60.4%의 고도수가 믿기지 않는 츄이한 질감. 토피 캐러멜, 에스프레소, 정향, 말린 무화과가 폭포처럼 몰아침.',
+                            finish: '극도로 길고 따뜻한 피니시. 달콤한 타바코 리프와 바닐라 오크가 10분 이상 지속됨.',
+                            pairing: '다비도프 시가, 피칸 타르트',
+                            flavors: { peat: 2, sherry: 9, fruity: 8, oak: 10, spicy: 9 }
+                        },
+                        {
+                            id: 'log_jm_1',
+                            date: '2025-10-05',
+                            airingDays: 1,
+                            serveStyle: '니트 (글렌캐런)',
+                            fillLevelAtTasting: 95,
+                            score: 92.5,
+                            nosing: '강렬한 버번 바닐라, 흑설탕, 스파이시한 라이 노트가 먼저 지배적임.',
+                            palate: '높은 도수의 타격감과 함께 시나몬, 다크 캐러멜, 묵직한 체리 리큐르.',
+                            finish: '강렬한 스파이스와 묵직한 오크 타닌.',
+                            pairing: '피트 스모크 비프 저키',
+                            flavors: { peat: 2, sherry: 7, fruity: 6, oak: 9, spicy: 10 }
+                        }
+                    ]
+                },
+                {
+                    id: 'b_octomore_14_2',
+                    name: '옥토모어 14.2',
+                    engName: 'Octomore Edition 14.2 Super Heavily Peated',
+                    distillery: '브룩라디 (Bruichladdich)',
+                    category: '싱글몰트',
+                    region: '아일라 (Islay)',
+                    age: '5년',
+                    abv: 57.7,
+                    isCS: true,
+                    cask: '올로로소 셰리(40%) & 아마로네 와인 캐스크(60%)',
+                    ppm: '128.9 PPM',
+                    purchaseDate: '2026-01-12',
+                    purchaseStore: '데일리샷 스마트오더',
+                    price: 390000,
+                    status: 'OPENED',
+                    openDate: '2026-01-25',
+                    fillLevel: 80,
+                    flavors: { peat: 10, sherry: 8, fruity: 8, oak: 7, spicy: 8 },
+                    tastingLogs: [
+                        {
+                            id: 'log_oc_2',
+                            date: '2026-05-10',
+                            airingDays: 105,
+                            serveStyle: '니트 (글렌캐런)',
+                            fillLevelAtTasting: 80,
+                            score: 95.0,
+                            nosing: '매캐한 피트 연기 너머로 아마로네 캐스크 특유의 농축된 체리, 구운 사과, 훈제 베이컨, 로스팅한 커피 원두 향이 화사하게 피어오름.',
+                            palate: '피트와 레드와인 캐스크의 황금 밸런스. 짭조름한 바다 소금, 블랙커런트, 후추 스파이스와 크리미한 맥아의 단맛.',
+                            finish: '모닥불 재와 달콤한 베리 타르트의 여운이 끝없이 교차함.',
+                            pairing: '하몽 이베리코, 훈제 연어',
+                            flavors: { peat: 10, sherry: 8, fruity: 8, oak: 7, spicy: 8 }
+                        },
+                        {
+                            id: 'log_oc_1',
+                            date: '2026-01-25',
+                            airingDays: 1,
+                            serveStyle: '니트 (글렌캐런)',
+                            fillLevelAtTasting: 98,
+                            score: 93.0,
+                            nosing: '압도적인 어시(Earthy)한 피트 스모크, 가죽, 요오드, 그 뒤로 붉은 과실향이 숨어 있음.',
+                            palate: '강렬한 피트 펀치와 57.7%의 묵직한 타격감. 다크 초콜릿과 에스프레소.',
+                            finish: '강렬한 스모크와 드라이한 와인 타닌.',
+                            pairing: '단독 시음',
+                            flavors: { peat: 10, sherry: 7, fruity: 6, oak: 7, spicy: 9 }
+                        }
+                    ]
+                },
+                {
+                    id: 'b_dalmore_ka3',
+                    name: '달모어 킹 알렉산더 3세',
+                    engName: 'The Dalmore King Alexander III',
+                    distillery: '달모어 (The Dalmore)',
+                    category: '싱글몰트',
+                    region: '하이랜드 (Highland)',
+                    age: 'NAS',
+                    abv: 40.0,
+                    isCS: false,
+                    cask: '6종 캐스크 피니시 (버번·마투살렘 올로로소·마데이라·마르살라·포트·까베르네 소비뇽)',
+                    ppm: 'Unpeated',
+                    purchaseDate: '2026-02-18',
+                    purchaseStore: '인천공항 면세점',
+                    price: 360000,
+                    status: 'UNOPENED',
+                    openDate: '',
+                    fillLevel: 100,
+                    flavors: { peat: 1, sherry: 9, fruity: 9, oak: 7, spicy: 5 },
+                    tastingLogs: [
+                        {
+                            id: 'log_dm_1',
+                            date: '2026-02-18',
+                            airingDays: 0,
+                            serveStyle: '바(Bar) 사전 시음 기록',
+                            fillLevelAtTasting: 100,
+                            score: 91.5,
+                            nosing: '붉은 베리류, 패션프루트, 오렌지 제스트, 바닐라 빈과 마데이라 와인의 우아하고 화려한 아로마.',
+                            palate: '40% 도수의 실키하고 부드러운 목넘김. 크렘 브륄레, 구운 아몬드, 포트 와인의 붉은 과실 단맛.',
+                            finish: '은은한 시나몬, 정향, 달콤한 오렌지 초콜릿 여운. 특별한 날 개봉 예정인 소장용 바틀.',
+                            pairing: '무화과 타르트, 밀크 초콜릿',
+                            flavors: { peat: 1, sherry: 9, fruity: 9, oak: 7, spicy: 5 }
+                        }
+                    ]
+                }
+            ];
+        }
+
+        // -------------------------------------------------------------------------
+        // 2. INITIALIZATION & LOCALSTORAGE PERSISTENCE
+        // -------------------------------------------------------------------------
+        function initApp() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    bottles = JSON.parse(raw);
+                } else {
+                    bottles = getSampleBottles();
+                    saveToStorage();
+                }
+            } catch (e) {
+                console.error('Storage Load Error:', e);
+                bottles = getSampleBottles();
+            }
+            updateDashboardStats();
+            renderBottles();
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bottles));
+                updateDashboardStats();
+            } catch (e) {
+                showToast('데이터 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // 3. HELPER UTILITIES (D+N Calculation, Currency, Bottle SVG, Radar SVG)
+        // -------------------------------------------------------------------------
+        function calculateAiringDays(openDateStr, targetDateStr = null) {
+            if (!openDateStr) return 0;
+            const openDate = new Date(openDateStr);
+            const endDate = targetDateStr ? new Date(targetDateStr) : new Date();
+            const diffTime = endDate - openDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return Math.max(1, diffDays + 1);
+        }
+
+        function formatKRW(amount) {
+            const num = Number(amount) || 0;
+            return '₩' + num.toLocaleString('ko-KR');
+        }
+
+        function getBottleAvgScore(bottle) {
+            if (!bottle.tastingLogs || bottle.tastingLogs.length === 0) return 0;
+            const sum = bottle.tastingLogs.reduce((acc, log) => acc + Number(log.score || 0), 0);
+            return (sum / bottle.tastingLogs.length).toFixed(1);
+        }
+
+        // Visual SVG Whiskey Bottle Generator with Liquid Fill Level
+        function createBottleGaugeSVG(fillPercent, uid = 'b') {
+            const clamped = Math.max(0, Math.min(100, Number(fillPercent) || 0));
+            // Bottle body internal area: y from 35 to 125 (height = 90)
+            const maxLiquidHeight = 88;
+            const liquidHeight = (clamped / 100) * maxLiquidHeight;
+            const liquidY = 125 - liquidHeight;
+
+            const liquidColorStart = clamped <= 25 ? '#ef4444' : '#fbbf24';
+            const liquidColorEnd = clamped <= 25 ? '#991b1b' : '#b45309';
+
+            return `
+                <svg viewBox="0 0 64 136" class="w-full h-full drop-shadow-md">
+                    <defs>
+                        <clipPath id="bottleClip_${uid}">
+                            <path d="M24,6 L40,6 L40,14 L38,16 L39,34 C46,42 52,48 52,58 L52,120 C52,125 48,128 43,128 L21,128 C16,128 12,125 12,120 L12,58 C12,48 18,42 25,34 L26,16 L24,14 Z" />
+                        </clipPath>
+                        <linearGradient id="amberGrad_${uid}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="${liquidColorStart}" stop-opacity="0.95"/>
+                            <stop offset="50%" stop-color="#d97706" stop-opacity="0.95"/>
+                            <stop offset="100%" stop-color="${liquidColorEnd}" stop-opacity="0.98"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Glass Background -->
+                    <path d="M24,6 L40,6 L40,14 L38,16 L39,34 C46,42 52,48 52,58 L52,120 C52,125 48,128 43,128 L21,128 C16,128 12,125 12,120 L12,58 C12,48 18,42 25,34 L26,16 L24,14 Z" 
+                          fill="#141820" />
+
+                    <!-- Liquid Fill Inside ClipPath -->
+                    <g clip-path="url(#bottleClip_${uid})">
+                        <rect x="8" y="${liquidY}" width="48" height="${liquidHeight + 6}" fill="url(#amberGrad_${uid})" class="bottle-liquid" />
+                        ${clamped > 0 ? `<ellipse cx="32" cy="${liquidY}" rx="20" ry="2.5" fill="#fde68a" fill-opacity="0.55" />` : ''}
+                    </g>
+
+                    <!-- Cork / Foil Cap -->
+                    <path d="M24,5 L40,5 L40,15 L24,15 Z" fill="${clamped === 100 ? '#d97706' : '#374151'}" />
+
+                    <!-- Vintage Label Detail -->
+                    <rect x="17" y="68" width="30" height="28" rx="2" fill="#0f1115" fill-opacity="0.78" stroke="#f59e0b" stroke-width="0.8" stroke-opacity="0.6" />
+                    <line x1="21" y1="76" x2="43" y2="76" stroke="#f59e0b" stroke-width="1.2" stroke-opacity="0.85" />
+                    <line x1="24" y1="82" x2="40" y2="82" stroke="#9ca3af" stroke-width="0.9" stroke-opacity="0.6" />
+                    <line x1="26" y1="88" x2="38" y2="88" stroke="#9ca3af" stroke-width="0.8" stroke-opacity="0.4" />
+
+                    <!-- Bottle Outline & Glass Highlight -->
+                    <path d="M24,6 L40,6 L40,14 L38,16 L39,34 C46,42 52,48 52,58 L52,120 C52,125 48,128 43,128 L21,128 C16,128 12,125 12,120 L12,58 C12,48 18,42 25,34 L26,16 L24,14 Z" 
+                          fill="none" stroke="#4b5563" stroke-width="2" />
+                    <path d="M17,58 L17,116" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.18" />
+                </svg>
+            `;
+        }
+
+        // 5-Axis SVG Pentagon Radar Chart Generator
+        function createRadarChartSVG(primaryFlavors, secondaryFlavors = null) {
+            const labels = [
+                { key: 'peat', name: '피트/스모키' },
+                { key: 'sherry', name: '셰리/달콤함' },
+                { key: 'fruity', name: '프루티/화사함' },
+                { key: 'oak', name: '오크/우디' },
+                { key: 'spicy', name: '스파이시/타닌' }
+            ];
+
+            const size = 250;
+            const cx = size / 2;
+            const cy = size / 2 + 6;
+            const maxR = 82;
+
+            function getPoint(index, value) {
+                const angle = (Math.PI * 2 * index) / 5 - Math.PI / 2;
+                const r = (Math.max(0, Math.min(10, value)) / 10) * maxR;
+                const x = cx + r * Math.cos(angle);
+                const y = cy + r * Math.sin(angle);
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            }
+
+            // Grid Pentagons (Levels 2, 4, 6, 8, 10)
+            let gridPolygons = '';
+            [2, 4, 6, 8, 10].forEach(level => {
+                const pts = labels.map((_, idx) => getPoint(idx, level)).join(' ');
+                gridPolygons += `<polygon points="${pts}" fill="none" stroke="#2a2f3a" stroke-width="${level === 10 ? '1.5' : '1'}" />`;
+            });
+
+            // Axis lines & Labels
+            let axesAndLabels = '';
+            labels.forEach((item, idx) => {
+                const endPt = getPoint(idx, 10).split(',');
+                const angle = (Math.PI * 2 * idx) / 5 - Math.PI / 2;
+                const labelR = maxR + 24;
+                const lx = cx + labelR * Math.cos(angle);
+                const ly = cy + labelR * Math.sin(angle);
+
+                const val = primaryFlavors[item.key] || 5;
+                axesAndLabels += `
+                    <line x1="${cx}" y1="${cy}" x2="${endPt[0]}" y2="${endPt[1]}" stroke="#2a2f3a" stroke-width="1" stroke-dasharray="2,2" />
+                    <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="#d1d5db" font-size="10.5" font-weight="600" text-anchor="middle" dominant-baseline="middle">
+                        ${item.name} (${val})
+                    </text>
+                `;
+            });
+
+            // Secondary Polygon (Initial Opening Tasting for comparison)
+            let secondaryPoly = '';
+            if (secondaryFlavors) {
+                const secPts = labels.map((item, idx) => getPoint(idx, secondaryFlavors[item.key] || 5)).join(' ');
+                secondaryPoly = `
+                    <polygon points="${secPts}" fill="rgba(34, 211, 238, 0.12)" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="4,2" />
+                `;
+            }
+
+            // Primary Polygon (Current / Latest Flavors)
+            const priPts = labels.map((item, idx) => getPoint(idx, primaryFlavors[item.key] || 5)).join(' ');
+            let priDots = '';
+            labels.forEach((item, idx) => {
+                const [px, py] = getPoint(idx, primaryFlavors[item.key] || 5).split(',');
+                priDots += `<circle cx="${px}" cy="${py}" r="3.8" fill="#f59e0b" stroke="#0f1115" stroke-width="1.5" />`;
+            });
+
+            return `
+                <svg viewBox="0 0 ${size} ${size}" class="w-full h-full max-w-[260px] max-h-[260px]">
+                    ${gridPolygons}
+                    ${axesAndLabels}
+                    ${secondaryPoly}
+                    <polygon points="${priPts}" fill="rgba(245, 158, 11, 0.28)" stroke="#f59e0b" stroke-width="2.4" />
+                    ${priDots}
+                </svg>
+            `;
+        }
+
+        // -------------------------------------------------------------------------
+        // 4. DASHBOARD STATS & BOTTLE CARD GRID RENDERING
+        // -------------------------------------------------------------------------
+        function updateDashboardStats() {
+            const total = bottles.length;
+            const singleMalts = bottles.filter(b => b.category === '싱글몰트').length;
+            const bourbons = bottles.filter(b => b.category === '버번').length;
+            const opened = bottles.filter(b => b.status === 'OPENED').length;
+            const unopened = bottles.filter(b => b.status === 'UNOPENED').length;
+            const lowLevelCount = bottles.filter(b => b.status === 'OPENED' && b.fillLevel > 0 && b.fillLevel <= 35).length;
+
+            const totalVal = bottles.reduce((acc, b) => acc + (Number(b.price) || 0), 0);
+            const avgPrice = total > 0 ? Math.round(totalVal / total) : 0;
+
+            let allScores = [];
+            let totalLogsCount = 0;
+            bottles.forEach(b => {
+                if (b.tastingLogs && b.tastingLogs.length > 0) {
+                    totalLogsCount += b.tastingLogs.length;
+                    b.tastingLogs.forEach(l => {
+                        if (l.score) allScores.push(Number(l.score));
+                    });
+                }
+            });
+
+            const overallAvgRating = allScores.length > 0
+                ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('statTotalBottles').textContent = total;
+            document.getElementById('statTotalBreakdown').textContent = `싱글몰트 ${singleMalts} · 버번 ${bourbons} · 기타 ${Math.max(0, total - singleMalts - bourbons)}`;
+            document.getElementById('statOpenedBottles').textContent = opened;
+            document.getElementById('statUnopenedSub').textContent = `/ 미개봉 ${unopened}`;
+
+            const lowAlertEl = document.getElementById('statLowLevelAlert');
+            if (lowLevelCount > 0) {
+                lowAlertEl.innerHTML = `<span class="text-amber-400 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i>잔량 35% 이하 바틀 ${lowLevelCount}병 (파라필름 권장)</span>`;
+            } else {
+                lowAlertEl.textContent = '모든 개봉 바틀 잔량 안정적';
+            }
+
+            document.getElementById('statTotalValue').textContent = formatKRW(totalVal);
+            document.getElementById('statAvgPrice').textContent = `바틀당 평균 ${formatKRW(avgPrice)}`;
+            document.getElementById('statAvgRating').textContent = overallAvgRating;
+            document.getElementById('statTotalLogs').textContent = `누적 테이스팅 노트 ${totalLogsCount}건`;
+        }
+
+        function setFilterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-amber-500 text-gray-950 shadow-md';
+                } else {
+                    btn.className = 'cat-btn px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap bg-gray-800/80 text-gray-300 hover:bg-gray-700';
+                }
+            });
+            renderBottles();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            renderBottles();
+        }
+
+        function renderBottles() {
+            const statusFilter = document.getElementById('statusFilterSelect').value;
+            const sortBy = document.getElementById('sortSelect').value;
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.classList.toggle('hidden', query.length === 0);
+
+            let filtered = bottles.filter(b => {
+                if (activeCategory !== 'ALL' && b.category !== activeCategory) return false;
+                if (statusFilter !== 'ALL' && b.status !== statusFilter) return false;
+                if (query) {
+                    const hay = `${b.name} ${b.engName} ${b.distillery} ${b.region} ${b.cask} ${b.category}`.toLowerCase();
+                    if (!hay.includes(query)) return false;
+                }
+                return true;
+            });
+
+            // Sorting
+            filtered.sort((a, b) => {
+                if (sortBy === 'RECENT') return new Date(b.purchaseDate || 0) - new Date(a.purchaseDate || 0);
+                if (sortBy === 'RATING_DESC') return Number(getBottleAvgScore(b)) - Number(getBottleAvgScore(a));
+                if (sortBy === 'PRICE_DESC') return (Number(b.price) || 0) - (Number(a.price) || 0);
+                if (sortBy === 'ABV_DESC') return (Number(b.abv) || 0) - (Number(a.abv) || 0);
+                if (sortBy === 'AIRING_DESC') {
+                    const daysA = a.status === 'OPENED' ? calculateAiringDays(a.openDate) : -1;
+                    const daysB = b.status === 'OPENED' ? calculateAiringDays(b.openDate) : -1;
+                    return daysB - daysA;
+                }
+                return 0;
+            });
+
+            const grid = document.getElementById('bottleGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(bottle => {
+                const avgScore = getBottleAvgScore(bottle);
+                const airingDays = bottle.status === 'OPENED' ? calculateAiringDays(bottle.openDate) : 0;
+                const latestLog = bottle.tastingLogs && bottle.tastingLogs.length > 0 ? bottle.tastingLogs[0] : null;
+
+                // Status Badge HTML
+                let statusBadge = '';
+                if (bottle.status === 'OPENED') {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 개봉 D+${airingDays}일
+                    </span>`;
+                } else if (bottle.status === 'UNOPENED') {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <i class="fa-solid fa-lock text-[10px] mr-1"></i>미개봉 소장
+                    </span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-700/60 text-gray-400 border border-gray-600">
+                        공병 (Empty)
+                    </span>`;
+                }
+
+                const flavors = (latestLog && latestLog.flavors) ? latestLog.flavors : (bottle.flavors || { peat: 5, sherry: 5, fruity: 5, oak: 5, spicy: 5 });
+
+                return `
+                    <article onclick="openDetailModal('${bottle.id}')" class="bg-vault-card hover:bg-vault-cardHover border border-vault-border hover:border-amber-500/50 rounded-2xl p-5 transition-all duration-200 cursor-pointer group flex flex-col justify-between shadow-lg">
+                        <div>
+                            <!-- Top Row: Badges & Score -->
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">${bottle.category}</span>
+                                    <span class="px-2 py-0.5 rounded-lg text-[11px] bg-gray-800 text-gray-300">${bottle.region}</span>
+                                    ${statusBadge}
+                                </div>
+                                ${avgScore > 0 ? `
+                                <div class="flex items-center gap-1 bg-[#111318] border border-amber-500/30 px-2.5 py-1 rounded-xl shrink-0">
+                                    <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+                                    <span class="text-xs font-bold text-white">${avgScore}</span>
+                                </div>` : ''}
+                            </div>
+
+                            <!-- Middle Body: Visual Bottle Gauge + Core Details -->
+                            <div class="flex gap-4 items-center">
+                                <!-- Visual SVG Bottle -->
+                                <div class="w-16 h-28 shrink-0 bg-[#111318] border border-vault-border rounded-xl p-1.5 flex flex-col items-center justify-center group-hover:border-amber-500/40 transition" onclick="event.stopPropagation()">
+                                    <div class="w-11 h-20">
+                                        ${createBottleGaugeSVG(bottle.fillLevel, bottle.id)}
+                                    </div>
+                                    <span class="text-[10px] font-bold ${bottle.fillLevel <= 25 ? 'text-red-400' : 'text-amber-400'}">${bottle.fillLevel}%</span>
+                                </div>
+
+                                <!-- Bottle Text Info -->
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-base sm:text-lg font-bold text-white group-hover:text-amber-400 transition truncate">${bottle.name}</h3>
+                                    <p class="text-xs text-gray-400 font-serif italic truncate mb-2">${bottle.engName || bottle.distillery}</p>
+
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-300 mb-2">
+                                        <span><strong class="text-gray-400">숙성:</strong> ${bottle.age}</span>
+                                        <span><strong class="text-gray-400">도수:</strong> <strong class="text-amber-400">${bottle.abv}%</strong> ${bottle.isCS ? '<span class="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-bold">CS</span>' : ''}</span>
+                                        ${bottle.ppm && !bottle.ppm.toLowerCase().includes('unpeated') ? `<span class="text-emerald-400 font-medium"><i class="fa-solid fa-fire-flame-curved text-[10px] mr-0.5"></i>${bottle.ppm}</span>` : ''}
+                                    </div>
+
+                                    <p class="text-xs text-gray-400 truncate bg-[#111318] px-2.5 py-1.5 rounded-lg border border-vault-border/60">
+                                        <i class="fa-solid fa-database text-amber-500/80 mr-1.5 text-[10px]"></i>${bottle.cask}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Latest Tasting Preview Snippet -->
+                            ${latestLog ? `
+                            <div class="mt-3.5 pt-3 border-t border-vault-border/70">
+                                <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
+                                    <span class="font-medium text-amber-400/90"><i class="fa-solid fa-feather-pointed mr-1"></i>최근 시음 노트 (${latestLog.date}${latestLog.airingDays ? ` · 에어링 ${latestLog.airingDays}일차` : ''})</span>
+                                    <span>시음 총 ${bottle.tastingLogs.length}회</span>
+                                </div>
+                                <p class="text-xs text-gray-300 line-clamp-1">${latestLog.nosing}</p>
+                            </div>` : ''}
+                        </div>
+
+                        <!-- Bottom Row: Flavor Mini Bars & Quick Fill Level Buttons -->
+                        <div class="mt-4 pt-3 border-t border-vault-border flex flex-wrap items-center justify-between gap-2">
+                            <!-- 5 Mini Flavor Pills -->
+                            <div class="flex items-center gap-1.5 text-[10px]">
+                                <span class="px-1.5 py-0.5 rounded bg-[#111318] text-gray-300 border border-vault-border">피트 <strong class="text-amber-400">${flavors.peat}</strong></span>
+                                <span class="px-1.5 py-0.5 rounded bg-[#111318] text-gray-300 border border-vault-border">셰리 <strong class="text-amber-400">${flavors.sherry}</strong></span>
+                                <span class="px-1.5 py-0.5 rounded bg-[#111318] text-gray-300 border border-vault-border">과실 <strong class="text-amber-400">${flavors.fruity}</strong></span>
+                                <span class="px-1.5 py-0.5 rounded bg-[#111318] text-gray-300 border border-vault-border">오크 <strong class="text-amber-400">${flavors.oak}</strong></span>
+                                <span class="px-1.5 py-0.5 rounded bg-[#111318] text-gray-300 border border-vault-border">스파이시 <strong class="text-amber-400">${flavors.spicy}</strong></span>
+                            </div>
+
+                            <!-- Quick Fill Level Stepper on Card -->
+                            <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                                <span class="text-[10px] text-gray-500 mr-1">잔량:</span>
+                                ${[100, 75, 50, 25].map(lvl => `
+                                    <button onclick="quickChangeCardLevel('${bottle.id}', ${lvl})" class="px-1.5 py-0.5 rounded text-[10px] font-semibold transition ${Number(bottle.fillLevel) === lvl ? 'bg-amber-500 text-gray-950' : 'bg-[#111318] text-gray-400 hover:text-white border border-vault-border'}">${lvl}%</button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function quickChangeCardLevel(bottleId, newLevel) {
+            const bottle = bottles.find(b => b.id === bottleId);
+            if (!bottle) return;
+
+            bottle.fillLevel = Number(newLevel);
+            if (bottle.fillLevel === 0) {
+                bottle.status = 'EMPTY';
+            } else if (bottle.fillLevel < 100 && bottle.status === 'UNOPENED') {
+                bottle.status = 'OPENED';
+                if (!bottle.openDate) {
+                    bottle.openDate = new Date().toISOString().split('T')[0];
+                }
+            }
+            saveToStorage();
+            renderBottles();
+            showToast(`'${bottle.name}' 잔량이 ${newLevel}%로 변경되었습니다.`);
+        }
+
+        // -------------------------------------------------------------------------
+        // 5. WHISKEY DETAIL MODAL & AIRING TIMELINE LOGS
+        // -------------------------------------------------------------------------
+        function openDetailModal(bottleId) {
+            const bottle = bottles.find(b => b.id === bottleId);
+            if (!bottle) return;
+            currentDetailBottleId = bottleId;
+
+            document.getElementById('detailCategoryBadge').textContent = `${bottle.category} · ${bottle.region}`;
+            document.getElementById('detailName').textContent = bottle.name;
+            document.getElementById('detailEngName').textContent = bottle.engName || bottle.distillery;
+
+            document.getElementById('detailDistillery').textContent = `${bottle.distillery} (${bottle.region})`;
+            document.getElementById('detailAge').textContent = bottle.age;
+            document.getElementById('detailAbv').innerHTML = `${bottle.abv}% ${bottle.isCS ? '<span class="ml-1 px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 rounded">CS</span>' : ''}`;
+            document.getElementById('detailCask').textContent = bottle.cask;
+            document.getElementById('detailPpm').textContent = bottle.ppm || 'Unpeated';
+
+            document.getElementById('detailPurchaseDate').textContent = bottle.purchaseDate || '-';
+            document.getElementById('detailPurchaseStore').textContent = bottle.purchaseStore || '-';
+            document.getElementById('detailPrice').textContent = formatKRW(bottle.price);
+
+            // Edit / Delete buttons binding
+            document.getElementById('detailEditBtn').onclick = () => {
+                closeDetailModal();
+                openBottleFormModal(bottle.id);
+            };
+            document.getElementById('detailDeleteBtn').onclick = () => {
+                openConfirmModal(
+                    '위스키 삭제',
+                    `'${bottle.name}' 바틀과 모든 테이스팅 노트를 볼트에서 삭제하시겠습니까?`,
+                    () => {
+                        bottles = bottles.filter(b => b.id !== bottle.id);
+                        saveToStorage();
+                        renderBottles();
+                        closeDetailModal();
+                        showToast('바틀이 삭제되었습니다.');
+                    }
+                );
+            };
+
+            // Render Gauge, Status Badges & Radar Chart
+            refreshDetailGaugeAndStatus();
+            refreshDetailRadarChart();
+            renderDetailTimeline();
+
+            // Reset New Tasting Form default values
+            document.getElementById('newTastingForm').classList.add('hidden');
+            document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('logFillLevel').value = bottle.fillLevel;
+            const currentFlavors = getLatestFlavors(bottle);
+            document.getElementById('logFPeat').value = currentFlavors.peat;
+            document.getElementById('logFSherry').value = currentFlavors.sherry;
+            document.getElementById('logFFruity').value = currentFlavors.fruity;
+            document.getElementById('logFOak').value = currentFlavors.oak;
+            document.getElementById('logFSpicy').value = currentFlavors.spicy;
+
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            currentDetailBottleId = null;
+        }
+
+        function getLatestFlavors(bottle) {
+            if (bottle.tastingLogs && bottle.tastingLogs.length > 0 && bottle.tastingLogs[0].flavors) {
+                return bottle.tastingLogs[0].flavors;
+            }
+            return bottle.flavors || { peat: 5, sherry: 5, fruity: 5, oak: 5, spicy: 5 };
+        }
+
+        function refreshDetailGaugeAndStatus() {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+
+            document.getElementById('detailBottleSvgContainer').innerHTML = createBottleGaugeSVG(bottle.fillLevel, 'detail_' + bottle.id);
+            document.getElementById('detailLevelText').textContent = `${bottle.fillLevel}%`;
+            document.getElementById('detailLevelSlider').value = bottle.fillLevel;
+
+            const parafilmAlert = document.getElementById('parafilmAlertBadge');
+            if (bottle.status === 'OPENED' && bottle.fillLevel > 0 && bottle.fillLevel <= 40) {
+                parafilmAlert.classList.remove('hidden');
+            } else {
+                parafilmAlert.classList.add('hidden');
+            }
+
+            const statusHeader = document.getElementById('detailStatusHeader');
+            if (bottle.status === 'OPENED') {
+                const days = calculateAiringDays(bottle.openDate);
+                statusHeader.innerHTML = `
+                    <span class="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> 개봉됨 · 에어링 D+${days}일째
+                    </span>
+                    <span class="text-xs text-gray-400">개봉일: ${bottle.openDate || '-'}</span>
+                `;
+            } else if (bottle.status === 'UNOPENED') {
+                statusHeader.innerHTML = `
+                    <span class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <i class="fa-solid fa-lock mr-1"></i> 미개봉 보관 중
+                    </span>
+                    <button onclick="openBottleNow()" class="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow">
+                        <i class="fa-solid fa-wine-glass mr-1"></i> 오늘 개봉하기 (Start Airing)
+                    </button>
+                `;
+            } else {
+                statusHeader.innerHTML = `
+                    <span class="px-3 py-1 rounded-xl text-xs font-bold bg-gray-800 text-gray-400 border border-gray-700">
+                        공병 (Empty) · 개봉일: ${bottle.openDate || '-'}
+                    </span>
+                `;
+            }
+        }
+
+        function openBottleNow() {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+            bottle.status = 'OPENED';
+            bottle.openDate = new Date().toISOString().split('T')[0];
+            if (bottle.fillLevel === 100) bottle.fillLevel = 95;
+            saveToStorage();
+            refreshDetailGaugeAndStatus();
+            renderBottles();
+            showToast(`축하합니다! '${bottle.name}' 에어링 트래킹(D+1일)이 시작되었습니다.`);
+        }
+
+        function updateDetailBottleLevel(val) {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+            const num = Number(val);
+            bottle.fillLevel = num;
+
+            if (num === 0) {
+                bottle.status = 'EMPTY';
+            } else if (num < 100 && bottle.status === 'UNOPENED') {
+                bottle.status = 'OPENED';
+                if (!bottle.openDate) bottle.openDate = new Date().toISOString().split('T')[0];
+            } else if (num > 0 && bottle.status === 'EMPTY') {
+                bottle.status = 'OPENED';
+            }
+
+            saveToStorage();
+            refreshDetailGaugeAndStatus();
+            renderBottles();
+        }
+
+        function refreshDetailRadarChart() {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+
+            const compareChecked = document.getElementById('compareRadarCheckbox').checked;
+            const logs = bottle.tastingLogs || [];
+
+            const latestFlavors = getLatestFlavors(bottle);
+            let initialFlavors = null;
+
+            if (compareChecked && logs.length >= 2) {
+                initialFlavors = logs[logs.length - 1].flavors || bottle.flavors;
+                document.getElementById('radarInitialLegend').classList.remove('hidden');
+            } else {
+                document.getElementById('radarInitialLegend').classList.add('hidden');
+            }
+
+            document.getElementById('radarChartContainer').innerHTML = createRadarChartSVG(latestFlavors, initialFlavors);
+
+            const items = [
+                { label: '피트', val: latestFlavors.peat },
+                { label: '셰리', val: latestFlavors.sherry },
+                { label: '프루티', val: latestFlavors.fruity },
+                { label: '오크', val: latestFlavors.oak },
+                { label: '스파이시', val: latestFlavors.spicy }
+            ];
+            document.getElementById('detailFlavorNumericRow').innerHTML = items.map(i => `
+                <div class="bg-vault-card border border-vault-border rounded-lg py-1.5">
+                    <span class="text-[10px] text-gray-400 block">${i.label}</span>
+                    <span class="text-xs font-bold text-amber-400">${i.val} / 10</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDetailTimeline() {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+
+            const logs = bottle.tastingLogs || [];
+            document.getElementById('detailLogCountBadge').textContent = logs.length;
+
+            const container = document.getElementById('detailTimelineContainer');
+            if (logs.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#12151b] border border-vault-border rounded-2xl p-8 text-center ml-8">
+                        <p class="text-xs text-gray-400">아직 등록된 테이스팅 기록이 없습니다. 첫 번째 시음 노트를 남겨보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = logs.map((log, index) => {
+                const isLatest = index === 0;
+                const airingLabel = log.airingDays && log.airingDays > 0
+                    ? `개봉 후 D+${log.airingDays}일차`
+                    : '사전/초기 시음';
+
+                return `
+                    <div class="relative pl-10">
+                        <!-- Timeline Dot -->
+                        <div class="absolute left-2.5 top-4 w-3.5 h-3.5 rounded-full ${isLatest ? 'bg-amber-400 ring-4 ring-amber-500/20' : 'bg-gray-600'}"></div>
+
+                        <div class="bg-[#12151b] border ${isLatest ? 'border-amber-500/40' : 'border-vault-border'} rounded-2xl p-4 sm:p-5 space-y-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-vault-border/80 pb-2.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-bold text-white">${log.date}</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isLatest ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20'}">
+                                        <i class="fa-solid fa-hourglass-half mr-1 text-[10px]"></i>${airingLabel}
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-lg text-[11px] bg-gray-800 text-gray-300">${log.serveStyle || '니트'}</span>
+                                    ${log.fillLevelAtTasting !== undefined ? `<span class="text-[11px] text-gray-400">당시 잔량 ${log.fillLevelAtTasting}%</span>` : ''}
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-1 bg-vault-card px-2.5 py-1 rounded-xl border border-amber-500/30">
+                                        <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+                                        <span class="text-xs font-bold text-amber-400">${Number(log.score).toFixed(1)}</span>
+                                    </div>
+                                    <button onclick="deleteTastingLog('${log.id}')" class="text-gray-500 hover:text-red-400 text-xs transition" title="이 시음 기록 삭제">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Nosing, Palate, Finish Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                <div class="bg-vault-card/70 border border-vault-border/60 rounded-xl p-3">
+                                    <span class="text-[11px] font-bold text-amber-400 block mb-1"><i class="fa-solid fa-wind mr-1"></i>Nosing (향)</span>
+                                    <p class="text-gray-200 leading-relaxed">${log.nosing}</p>
+                                </div>
+                                <div class="bg-vault-card/70 border border-vault-border/60 rounded-xl p-3">
+                                    <span class="text-[11px] font-bold text-amber-400 block mb-1"><i class="fa-solid fa-droplet mr-1"></i>Palate (맛)</span>
+                                    <p class="text-gray-200 leading-relaxed">${log.palate}</p>
+                                </div>
+                                <div class="bg-vault-card/70 border border-vault-border/60 rounded-xl p-3">
+                                    <span class="text-[11px] font-bold text-amber-400 block mb-1"><i class="fa-solid fa-hourglass-end mr-1"></i>Finish (여운)</span>
+                                    <p class="text-gray-200 leading-relaxed">${log.finish}</p>
+                                </div>
+                            </div>
+
+                            <!-- Pairing & Flavor Scores Row -->
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                                <div class="text-gray-400">
+                                    ${log.pairing ? `<i class="fa-solid fa-utensils text-amber-400 mr-1.5"></i><strong class="text-gray-300">페어링:</strong> ${log.pairing}` : ''}
+                                </div>
+                                ${log.flavors ? `
+                                <div class="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                    <span>피트 ${log.flavors.peat}</span>·
+                                    <span>셰리 ${log.flavors.sherry}</span>·
+                                    <span>프루티 ${log.flavors.fruity}</span>·
+                                    <span>오크 ${log.flavors.oak}</span>·
+                                    <span>스파이시 ${log.flavors.spicy}</span>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleNewTastingForm() {
+            const form = document.getElementById('newTastingForm');
+            form.classList.toggle('hidden');
+        }
+
+        function saveNewTastingLog(e) {
+            e.preventDefault();
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+
+            const logDate = document.getElementById('logDate').value;
+            const airingDays = bottle.openDate ? calculateAiringDays(bottle.openDate, logDate) : 1;
+            const fillAtTasting = Number(document.getElementById('logFillLevel').value || bottle.fillLevel);
+
+            const newFlavors = {
+                peat: Number(document.getElementById('logFPeat').value),
+                sherry: Number(document.getElementById('logFSherry').value),
+                fruity: Number(document.getElementById('logFFruity').value),
+                oak: Number(document.getElementById('logFOak').value),
+                spicy: Number(document.getElementById('logFSpicy').value)
+            };
+
+            const newLog = {
+                id: 'log_' + Date.now(),
+                date: logDate,
+                airingDays: airingDays,
+                serveStyle: document.getElementById('logServeStyle').value,
+                fillLevelAtTasting: fillAtTasting,
+                score: Number(document.getElementById('logScore').value),
+                nosing: document.getElementById('logNosing').value.trim(),
+                palate: document.getElementById('logPalate').value.trim(),
+                finish: document.getElementById('logFinish').value.trim(),
+                pairing: document.getElementById('logPairing').value.trim(),
+                flavors: newFlavors
+            };
+
+            if (!bottle.tastingLogs) bottle.tastingLogs = [];
+            bottle.tastingLogs.unshift(newLog);
+            // Sort logs descending by date
+            bottle.tastingLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // Update bottle's current flavor profile & fill level
+            bottle.flavors = newFlavors;
+            bottle.fillLevel = fillAtTasting;
+            if (bottle.status === 'UNOPENED' && fillAtTasting < 100) {
+                bottle.status = 'OPENED';
+                if (!bottle.openDate) bottle.openDate = logDate;
+            }
+
+            saveToStorage();
+            refreshDetailGaugeAndStatus();
+            refreshDetailRadarChart();
+            renderDetailTimeline();
+            renderBottles();
+
+            // Clear textareas & close form
+            document.getElementById('logNosing').value = '';
+            document.getElementById('logPalate').value = '';
+            document.getElementById('logFinish').value = '';
+            document.getElementById('logPairing').value = '';
+            document.getElementById('newTastingForm').classList.add('hidden');
+
+            showToast('새로운 테이스팅 & 에어링 기록이 추가되었습니다.');
+        }
+
+        function deleteTastingLog(logId) {
+            const bottle = bottles.find(b => b.id === currentDetailBottleId);
+            if (!bottle) return;
+
+            openConfirmModal('시음 노트 삭제', '선택한 테이스팅 노트를 삭제하시겠습니까?', () => {
+                bottle.tastingLogs = bottle.tastingLogs.filter(l => l.id !== logId);
+                saveToStorage();
+                refreshDetailRadarChart();
+                renderDetailTimeline();
+                renderBottles();
+                showToast('시음 노트가 삭제되었습니다.');
+            });
+        }
+
+        // -------------------------------------------------------------------------
+        // 6. ADD / EDIT WHISKEY BOTTLE FORM MODAL
+        // -------------------------------------------------------------------------
+        function handleFormStatusChange() {
+            const status = document.getElementById('formStatus').value;
+            const openDateInput = document.getElementById('formOpenDate');
+            const fillSlider = document.getElementById('formFillLevel');
+            const fillLabel = document.getElementById('formLevelLabel');
+
+            if (status === 'UNOPENED') {
+                openDateInput.value = '';
+                fillSlider.value = 100;
+                fillLabel.textContent = '100%';
+            } else if (status === 'EMPTY') {
+                fillSlider.value = 0;
+                fillLabel.textContent = '0%';
+            } else if (status === 'OPENED' && !openDateInput.value) {
+                openDateInput.value = new Date().toISOString().split('T')[0];
+            }
+        }
+
+        function openBottleFormModal(editBottleId = null) {
+            const modal = document.getElementById('bottleFormModal');
+            const form = document.getElementById('bottleForm');
+            form.reset();
+
+            const today = new Date().toISOString().split('T')[0];
+            const initialNoteSec = document.getElementById('initialNoteSection');
+
+            if (editBottleId) {
+                const bottle = bottles.find(b => b.id === editBottleId);
+                if (!bottle) return;
+
+                document.getElementById('bottleFormTitle').textContent = '위스키 바틀 정보 수정';
+                document.getElementById('formBottleId').value = bottle.id;
+                document.getElementById('formName').value = bottle.name;
+                document.getElementById('formEngName').value = bottle.engName || '';
+                document.getElementById('formCategory').value = bottle.category;
+                document.getElementById('formDistillery').value = bottle.distillery;
+                document.getElementById('formRegion').value = bottle.region;
+                document.getElementById('formAge').value = bottle.age;
+                document.getElementById('formAbv').value = bottle.abv;
+                document.getElementById('formIsCS').checked = !!bottle.isCS;
+                document.getElementById('formPpm').value = bottle.ppm || '';
+                document.getElementById('formCask').value = bottle.cask;
+
+                document.getElementById('formPurchaseDate').value = bottle.purchaseDate || today;
+                document.getElementById('formPurchaseStore').value = bottle.purchaseStore || '';
+                document.getElementById('formPrice').value = bottle.price || 0;
+                document.getElementById('formStatus').value = bottle.status;
+                document.getElementById('formOpenDate').value = bottle.openDate || '';
+                document.getElementById('formFillLevel').value = bottle.fillLevel;
+                document.getElementById('formLevelLabel').textContent = bottle.fillLevel + '%';
+
+                const f = getLatestFlavors(bottle);
+                document.getElementById('formFPeat').value = f.peat;
+                document.getElementById('lblPeat').textContent = f.peat;
+                document.getElementById('formFSherry').value = f.sherry;
+                document.getElementById('lblSherry').textContent = f.sherry;
+                document.getElementById('formFFruity').value = f.fruity;
+                document.getElementById('lblFruity').textContent = f.fruity;
+                document.getElementById('formFOak').value = f.oak;
+                document.getElementById('lblOak').textContent = f.oak;
+                document.getElementById('formFSpicy').value = f.spicy;
+                document.getElementById('lblSpicy').textContent = f.spicy;
+
+                initialNoteSec.classList.add('hidden');
+            } else {
+                document.getElementById('bottleFormTitle').textContent = '새 위스키 바틀 등록';
+                document.getElementById('formBottleId').value = '';
+                document.getElementById('formPurchaseDate').value = today;
+                document.getElementById('formOpenDate').value = today;
+                document.getElementById('formStatus').value = 'OPENED';
+                document.getElementById('formFillLevel').value = 95;
+                document.getElementById('formLevelLabel').textContent = '95%';
+
+                ['Peat', 'Sherry', 'Fruity', 'Oak', 'Spicy'].forEach(k => {
+                    document.getElementById('lbl' + k).textContent = document.getElementById('formF' + k).value;
+                });
+
+                initialNoteSec.classList.remove('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBottleFormModal() {
+            const modal = document.getElementById('bottleFormModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveBottleForm(e) {
+            e.preventDefault();
+            const editId = document.getElementById('formBottleId').value;
+
+            const flavors = {
+                peat: Number(document.getElementById('formFPeat').value),
+                sherry: Number(document.getElementById('formFSherry').value),
+                fruity: Number(document.getElementById('formFFruity').value),
+                oak: Number(document.getElementById('formFOak').value),
+                spicy: Number(document.getElementById('formFSpicy').value)
+            };
+
+            const bottleData = {
+                id: editId || ('b_' + Date.now()),
+                name: document.getElementById('formName').value.trim(),
+                engName: document.getElementById('formEngName').value.trim(),
+                category: document.getElementById('formCategory').value,
+                distillery: document.getElementById('formDistillery').value.trim(),
+                region: document.getElementById('formRegion').value.trim(),
+                age: document.getElementById('formAge').value.trim(),
+                abv: Number(document.getElementById('formAbv').value),
+                isCS: document.getElementById('formIsCS').checked,
+                ppm: document.getElementById('formPpm').value.trim() || 'Unpeated',
+                cask: document.getElementById('formCask').value.trim(),
+                purchaseDate: document.getElementById('formPurchaseDate').value,
+                purchaseStore: document.getElementById('formPurchaseStore').value.trim(),
+                price: Number(document.getElementById('formPrice').value || 0),
+                status: document.getElementById('formStatus').value,
+                openDate: document.getElementById('formOpenDate').value,
+                fillLevel: Number(document.getElementById('formFillLevel').value),
+                flavors: flavors
+            };
+
+            if (editId) {
+                const idx = bottles.findIndex(b => b.id === editId);
+                if (idx > -1) {
+                    bottleData.tastingLogs = bottles[idx].tastingLogs || [];
+                    bottles[idx] = bottleData;
+                }
+                showToast(`'${bottleData.name}' 정보가 업데이트되었습니다.`);
+            } else {
+                const initNote = document.getElementById('formInitialNote').value.trim();
+                const initScore = Number(document.getElementById('formInitialScore').value || 92);
+                bottleData.tastingLogs = [];
+
+                if (initNote) {
+                    bottleData.tastingLogs.push({
+                        id: 'log_' + Date.now(),
+                        date: bottleData.openDate || bottleData.purchaseDate,
+                        airingDays: 1,
+                        serveStyle: '니트 (글렌캐런)',
+                        fillLevelAtTasting: bottleData.fillLevel,
+                        score: initScore,
+                        nosing: initNote,
+                        palate: `${bottleData.cask} 숙성 특유의 풍미와 밸런스.`,
+                        finish: '첫 개봉 테이스팅 기록.',
+                        pairing: '',
+                        flavors: flavors
+                    });
+                }
+
+                bottles.unshift(bottleData);
+                showToast(`새 위스키 '${bottleData.name}' 바틀이 볼트에 등록되었습니다!`);
+            }
+
+            saveToStorage();
+            renderBottles();
+            closeBottleFormModal();
+        }
+
+        // -------------------------------------------------------------------------
+        // 7. TODAY'S DRAM RECOMMENDATION ENGINE
+        // -------------------------------------------------------------------------
+        function openRecommendationModal() {
+            const modal = document.getElementById('recommendModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            pickRecommendation('SHERRY');
+        }
+
+        function closeRecommendationModal() {
+            const modal = document.getElementById('recommendModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function pickRecommendation(mood) {
+            const openedBottles = bottles.filter(b => b.status === 'OPENED' && b.fillLevel > 0);
+            const pool = openedBottles.length > 0 ? openedBottles : bottles;
+
+            if (pool.length === 0) {
+                document.getElementById('recommendResultBox').innerHTML = `<p class="text-xs text-gray-400 text-center">보유 중인 위스키가 없습니다.</p>`;
+                return;
+            }
+
+            let best = pool[0];
+            let reason = '';
+
+            if (mood === 'SHERRY') {
+                best = [...pool].sort((a, b) => (getLatestFlavors(b).sherry || 0) - (getLatestFlavors(a).sherry || 0))[0];
+                reason = '깊고 농밀한 셰리 캐스크의 단맛과 건과일 풍미가 가장 뛰어난 바틀입니다.';
+            } else if (mood === 'PEAT') {
+                best = [...pool].sort((a, b) => (getLatestFlavors(b).peat || 0) - (getLatestFlavors(a).peat || 0))[0];
+                reason = '강렬한 피트 스모크와 복합적인 여운을 즐기기에 가장 완벽한 선택입니다.';
+            } else if (mood === 'HIGH_ABV') {
+                best = [...pool].sort((a, b) => (b.abv || 0) - (a.abv || 0))[0];
+                reason = `${best.abv}%의 고도수 타격감과 진한 오크 스파이스를 온전히 느낄 수 있습니다.`;
+            } else if (mood === 'FRUITY') {
+                best = [...pool].sort((a, b) => (getLatestFlavors(b).fruity || 0) - (getLatestFlavors(a).fruity || 0))[0];
+                reason = '화사하고 우아한 과실 아로마가 잘 열려 있어 기분 전환용으로 최고입니다.';
+            }
+
+            const airingDays = best.status === 'OPENED' ? calculateAiringDays(best.openDate) : 0;
+
+            document.getElementById('recommendResultBox').innerHTML = `
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">오늘의 추천 드램</span>
+                        <h4 class="text-base font-bold text-white mt-0.5">${best.name}</h4>
+                        <p class="text-xs text-gray-400">${best.distillery} · ${best.abv}% · ${best.status === 'OPENED' ? `에어링 D+${airingDays}일차 (잔량 ${best.fillLevel}%)` : '미개봉'}</p>
+                        <p class="text-xs text-amber-200/90 mt-2">${reason}</p>
+                    </div>
+                    <button onclick="closeRecommendationModal(); openDetailModal('${best.id}');" class="px-3.5 py-2 rounded-xl amber-gradient-bg text-gray-950 font-bold text-xs shrink-0 shadow">
+                        노트 열기
+                    </button>
+                </div>
+            `;
+        }
+
+        // -------------------------------------------------------------------------
+        // 8. JSON BACKUP / RESTORE / RESET & CUSTOM TOAST / CONFIRM UI
+        // -------------------------------------------------------------------------
+        function exportData() {
+            const dataStr = JSON.stringify(bottles, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `whiskey_vault_backup_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('위스키 컬렉션 JSON 백업 파일이 다운로드되었습니다.');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        bottles = imported;
+                        saveToStorage();
+                        renderBottles();
+                        showToast(`총 ${imported.length}개의 위스키 바틀 데이터가 복원되었습니다!`);
+                    } else {
+                        showToast('올바른 위스키 백업 JSON 형식이 아닙니다.', 'error');
+                    }
+                } catch (err) {
+                    showToast('파일을 읽는 중 오류가 발생했습니다.', 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function resetToSampleData() {
+            openConfirmModal(
+                '초기 샘플 데이터 복원',
+                '현재 데이터를 초기 4종의 명품 위스키 샘플 데이터(블랙 아트, 조셉 매그너스 시가 블렌드, 옥토모어 14.2, 달모어 킹 알렉산더 3세)로 초기화하시겠습니까?',
+                () => {
+                    bottles = getSampleBottles();
+                    saveToStorage();
+                    renderBottles();
+                    showToast('초기 명품 위스키 샘플 데이터로 복원되었습니다.');
+                }
+            );
+        }
+
+        function openConfirmModal(title, message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+
+            const okBtn = document.getElementById('confirmOkBtn');
+            const cancelBtn = document.getElementById('confirmCancelBtn');
+
+            const close = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            };
+
+            okBtn.onclick = () => {
+                close();
+                onConfirm();
+            };
+            cancelBtn.onclick = close;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl text-xs font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${
+                isError
+                    ? 'bg-red-950/90 border-red-500/40 text-red-200'
+                    : 'bg-[#181b22]/95 border-amber-500/40 text-amber-300'
+            }`;
+
+            toast.innerHTML = `
+                <i class="fa-solid ${isError ? 'fa-circle-exclamation text-red-400' : 'fa-circle-check text-amber-400'} text-sm"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        }
+
+        // Launch App on Window Load
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
